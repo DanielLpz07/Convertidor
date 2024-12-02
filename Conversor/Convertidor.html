@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor de Unidades</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            background-color: #000; 
+        }
+        /* Video de fondo pero ajustado al tamaño completo de la ventana */
+        #video-fondo {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ajuste del video para cubrir el fondo */
+            z-index: -1; /* Colocar el video detrás del contenido */
+        }
+        h1 {
+            text-align: center;
+            margin: 20px 0;
+            color: #fff;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
+        }
+        .contenedor {
+            background: rgba(255, 255, 255, 0.5); 
+            max-width: 600px;
+            margin: 60px auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }        
+        label {
+            display: block;
+            margin: 15px 0 5px;
+            font-weight: bold;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        select:focus, input:focus {
+            outline: none;
+            border-color: #00b4d8;
+            box-shadow: 0 0 5px #00b4d8;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #00b4d8;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: #0077b6;
+        }
+        .resultado {
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(224, 247, 250, 0.6); /* Nivel de transparencia en el resultado */
+            border-radius: 5px;
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Video de fondo -->
+    <video autoplay muted loop id="video-fondo">
+        <source src="FND.mp4" type="video/mp4">
+        Tu navegador no soporta la reproducción de video.
+    </video>
+
+    <h1>Conversor de Unidades</h1>
+    <div class="contenedor">
+        <!-- Seleccionar la categoría -->
+        <label for="categoria">Seleccione una categoría:</label>
+        <select id="categoria" onchange="actualizarUnidades()">
+            <option value="longitud">Longitud</option>
+            <option value="masa">Masa</option>
+            <option value="temperatura">Temperatura</option>
+            <option value="tiempo">Tiempo</option>
+        </select>
+
+        <!-- Parte en donde se introduce el valor a convertir -->
+        <label for="valor">Seleccione el valor que desee convertir:</label>
+        <input type="number" id="valor" required placeholder="Valor">
+
+        <!-- Seleccionar las unidades de origen y destino -->
+        <label for="desde-unidad">Desde:</label>
+        <select id="desde-unidad"></select>
+
+        <label for="a-unidad">A:</label>
+        <select id="a-unidad"></select>
+
+        <!-- Botón para realizar la conversión -->
+        <button type="button" onclick="convertirUnidades()">Convertir</button>
+
+        <!-- Contenedor donde se muestra el resultado -->
+        <div class="resultado" id="resultado"></div>
+    </div>
+
+    <script>
+        // Categorías de unidades y las opciones disponibles en cada una
+        const unidades = {
+            longitud: ['metros', 'kilómetros', 'centímetros', 'milímetros', 'pulgadas', 'yardas', 'millas'],
+            masa: ['gramos', 'kilogramos', 'miligramos', 'onzas', 'libras'],
+            temperatura: ['Celsius', 'Fahrenheit', 'Kelvin'],
+            tiempo: ['segundos', 'minutos', 'horas', 'días']
+        };
+
+        // Actualizar las opciones de unidades disponibles según la categoría seleccionada
+        function actualizarUnidades() {
+            const categoria = document.getElementById("categoria").value;
+            const desdeUnidad = document.getElementById("desde-unidad");
+            const aUnidad = document.getElementById("a-unidad");
+
+            desdeUnidad.innerHTML = '';
+            aUnidad.innerHTML = '';
+
+            unidades[categoria].forEach(unidad => {
+                const opcionDesde = document.createElement("option");
+                opcionDesde.value = unidad;
+                opcionDesde.innerText = unidad;
+                desdeUnidad.appendChild(opcionDesde);
+
+                const opcionA = document.createElement("option");
+                opcionA.value = unidad;
+                opcionA.innerText = unidad;
+                aUnidad.appendChild(opcionA);
+            });
+        }
+
+        // Realizar la conversión entre las unidades seleccionadas
+        function convertirUnidades() {
+            const valor = parseFloat(document.getElementById("valor").value);
+            const desdeUnidad = document.getElementById("desde-unidad").value;
+            const aUnidad = document.getElementById("a-unidad").value;
+            const categoria = document.getElementById("categoria").value;
+            let resultado = 0;
+
+            if (isNaN(valor)) {
+                document.getElementById("resultado").innerText = "Por favor, introduzca un valor válido.";
+                return;
+            }
+
+            switch (categoria) {
+                case 'longitud':
+                    resultado = convertirLongitud(desdeUnidad, aUnidad, valor);
+                    break;
+                case 'masa':
+                    resultado = convertirMasa(desdeUnidad, aUnidad, valor);
+                    break;
+                case 'temperatura':
+                    resultado = convertirTemperatura(desdeUnidad, aUnidad, valor);
+                    break;
+                case 'tiempo':
+                    resultado = convertirTiempo(desdeUnidad, aUnidad, valor);
+                    break;
+            }
+
+            document.getElementById("resultado").innerText = `Su resultado es: ${resultado.toFixed(6)} ${aUnidad}`;
+        }
+
+        // Convertir unidades de longitud
+        function convertirLongitud(desde, a, valor) {
+            const conversiones = {
+                metros: 1,
+                kilómetros: 1000,
+                centímetros: 0.01,
+                milímetros: 0.001,
+                pulgadas: 0.0254,
+                yardas: 0.9144,
+                millas: 1609.34
+            };
+            return valor * conversiones[desde] / conversiones[a];
+        }
+
+        // Convertir unidades de masa
+        function convertirMasa(desde, a, valor) {
+            const conversiones = {
+                gramos: 1,
+                kilogramos: 1000,
+                miligramos: 0.001,
+                onzas: 28.3495,
+                libras: 453.592
+            };
+            return valor * conversiones[desde] / conversiones[a];
+        }
+
+        // Convertir unidades de temperatura
+        function convertirTemperatura(desde, a, valor) {
+            if (desde === 'Celsius' && a === 'Fahrenheit') {
+                return valor * 9 / 5 + 32;
+            } else if (desde === 'Celsius' && a === 'Kelvin') {
+                return valor + 273.15;
+            } else if (desde === 'Fahrenheit' && a === 'Celsius') {
+                return (valor - 32) * 5 / 9;
+            } else if (desde === 'Fahrenheit' && a === 'Kelvin') {
+                return (valor - 32) * 5 / 9 + 273.15;
+            } else if (desde === 'Kelvin' && a === 'Celsius') {
+                return valor - 273.15;
+            } else if (desde === 'Kelvin' && a === 'Fahrenheit') {
+                return (valor - 273.15) * 9 / 5 + 32;
+            }
+            return valor;
+        }
+
+        // Convertir unidades de tiempo
+        function convertirTiempo(desde, a, valor) {
+            const conversiones = {
+                segundos: 1,
+                minutos: 60,
+                horas: 3600,
+                días: 86400
+            };
+            return valor * conversiones[desde] / conversiones[a];
+        }
+
+        // Inicializa las opciones de unidades cuando la página se carga
+        window.onload = actualizarUnidades;
+    </script>
+</body>
+</html>
